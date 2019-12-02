@@ -1,5 +1,8 @@
 getFuelToLaunch :: Int -> Int
-getFuelToLaunch mass = (mass `div` 3) - 2
+getFuelToLaunch mass 
+    | fuelMass > 0 = sum [fuelMass, getFuelToLaunch fuelMass]
+    | otherwise    = 0
+    where fuelMass = (mass `div` 3) - 2
 
 main :: IO ()
 main = do
