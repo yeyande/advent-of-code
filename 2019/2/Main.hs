@@ -52,12 +52,16 @@ run = until end step
 replace :: Int -> Int -> Program -> Program
 replace idx val (app, pc, stop) = updateProgramState app idx val pc stop
 
+hasValidInitialValue :: Program -> Int -> Bool
+hasValidInitialValue (app, _, _) v = (app !! 0) == v
+
 main :: IO ()
 main = do
     input <- readFile "input.txt"
-    let modified = replace 1 12 $ replace 2 2 $ loadProgram input
-    let end = run modified
-    putStrLn $ show end
+    let prog = loadProgram input
+    let combinations = map (\(x, y) -> (replace 1 x $ replace 2 y $ prog, (x,y))) [(x,y) | x <- [0..99], y <- [0..99]]
+    let answer = (\(x,y) -> 100*x+y) $ snd $ head $ filter (\(app, iv) -> hasValidInitialValue (run app) 19690720) combinations
+    putStrLn $ show answer
 
 testExamples :: [Program]
 testExamples =
