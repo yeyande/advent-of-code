@@ -14,10 +14,10 @@ isNotDecreasing (a:xs)
     where tailIsNotDecreasing = isNotDecreasing xs
 
 isValidPassword :: String -> Bool
-isValidPassword x = foldl (&&) True $ map (\f -> f x) [containsDouble, isNotDecreasing]
+isValidPassword x = and $ map (\f -> f x) [containsDouble, isNotDecreasing]
 
 validPasswords :: [Int] -> [String]
-validPasswords bounds = filter isValidPassword  [replicate (6 - (length $ show x)) '0' ++ show x | x <- bounds]
+validPasswords bounds = filter isValidPassword [replicate (6 - (length $ show x)) '0' ++ show x | x <- bounds]
 
 range :: String -> [Int]
 range input = [start..stop]
