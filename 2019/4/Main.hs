@@ -3,7 +3,7 @@ import Data.Char
 import Data.List
 
 containsDouble :: String -> Bool
-containsDouble = not . null . filter (>1) . map length . group 
+containsDouble = not . null . filter (==2) . map length . group 
 
 isNotDecreasing :: String -> Bool
 isNotDecreasing [] = True
