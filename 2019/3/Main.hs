@@ -1,5 +1,6 @@
 import Data.List.Split
-import Data.List
+import qualified Data.List as List
+import qualified Data.Set as Set
 import Control.Exception
 data Movement = Horizontal Int | Vertical Int deriving (Show)
 type Point = (Int, Int)
@@ -12,7 +13,7 @@ testData = [["R8,U5,L5,D3", "U7,R6,D4,L4"],
 expectedTestOut = [6, 159, 135]
 
 parse :: String -> [Movement]
-parse input = map toMovement $ splitOn "," input
+parse input = List.map toMovement $ splitOn "," input
 
 toMovement :: String -> Movement
 toMovement movement
@@ -42,7 +43,7 @@ toPoint (x, y) (Horizontal d) = (x+d, y)
 toPoint (x, y) (Vertical d) = (x, y+d)
 
 pointsAlongMovement :: String -> [Point]
-pointsAlongMovement input = tail $ nub $ concat $ map pointsOnLine $ tail $ scanl newLineSegment ((0,0), (0,0)) $ tail $ scanl toPoint (0,0) $ parse input
+pointsAlongMovement input = tail $ concat $ List.map pointsOnLine $ tail $ scanl newLineSegment ((0,0), (0,0)) $ tail $ scanl toPoint (0,0) $ parse input
 
 compareManhattanDistance :: Point -> Point -> Ordering
 compareManhattanDistance a b = compare (manhattanDistance a) (manhattanDistance b)
@@ -51,10 +52,8 @@ manhattanDistance :: Point -> Int
 manhattanDistance (x, y) = (abs x) + (abs y)
 
 solve :: [String] -> Int
-solve input = manhattanDistance $ head $ sortBy compareManhattanDistance $ foldl intersect h t
-    where h = head path
-          t = tail path
-          path = map pointsAlongMovement input
+solve input = manhattanDistance $ head $ List.sortBy compareManhattanDistance $ Set.toList $ Set.intersection w1 w2
+    where [w1, w2] = List.map Set.fromList $ List.map pointsAlongMovement input
 
 main = do
     input <- readFile "input.txt"
@@ -63,5 +62,5 @@ main = do
 
 testExamples :: [Int]
 testExamples =
-    map shouldBeEqual (zip (map solve testData) expectedTestOut)
+    List.map shouldBeEqual (zip (List.map solve testData) expectedTestOut)
     where shouldBeEqual = \(got, expected) -> assert (got == expected) got
