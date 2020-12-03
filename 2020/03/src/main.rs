@@ -1,10 +1,10 @@
 fn main() {
     let contents = include_str!("../input.txt");
     let map: Vec<&str> = contents.lines().into_iter().collect();
-    let result = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
+    let result: usize = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
         .iter()
         .map(|&x| get_trees_hit_down_slope(map.clone(), x))
-        .fold(1, |a, b| a * b);
+        .product();
     println!("{}", result);
 }
 
@@ -20,7 +20,7 @@ fn get_trees_hit_down_slope(map: Vec<&str>, slope: (usize, usize)) -> usize {
             trees_hit += 1;
         }
     }
-    return trees_hit;
+    trees_hit
 }
 
 #[cfg(test)]
