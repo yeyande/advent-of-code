@@ -125,10 +125,10 @@ fn is_valid_passport_id(pid: Option<String>) -> bool {
 fn parse_to_passport(group: Vec<&str>) -> Option<Passport> {
     let one_liner = group.join(" ");
     let parsed = one_liner
-        .split(" ")
+        .split(' ')
         .collect::<Vec<&str>>()
         .into_iter()
-        .map(|x| x.split(":").collect::<Vec<&str>>())
+        .map(|x| x.split(':').collect::<Vec<&str>>())
         .collect::<Vec<Vec<&str>>>();
     let mut fields = HashMap::new();
     for v in parsed {
