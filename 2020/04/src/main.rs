@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+use regex::Regex;
 use itertools::Itertools;
 use std::fmt::Debug;
 use std::collections::HashMap;
@@ -38,8 +41,97 @@ impl Passport {
 
 
 fn is_valid_passport(passport: Passport) -> bool {
-    let required_fields = [passport.byr, passport.iyr, passport.eyr, passport.hgt, passport.hcl, passport.ecl, passport.pid];
-    required_fields.iter().all(|x| *x != None)
+    [
+        is_valid_birth_year(passport.byr),
+        is_valid_issue_year(passport.iyr),
+        is_valid_expiration_year(passport.eyr),
+        is_valid_height(passport.hgt),
+        is_valid_hair_color(passport.hcl),
+        is_valid_eye_color(passport.ecl),
+        is_valid_passport_id(passport.pid)
+    ].iter().all(|x| *x)
+}
+
+fn is_valid_birth_year(byr: Option<String>) -> bool {
+    byr.map(|x| x.parse::<i32>().unwrap())
+        .map(|x| x >= 1920 && x <= 2002)
+        .unwrap_or(false)
+}
+
+fn is_valid_issue_year(iyr: Option<String>) -> bool {
+    iyr.map(|x| x.parse::<i32>().unwrap())
+        .map(|x| x >= 2010 && x <= 2020)
+        .unwrap_or(false)
+}
+
+fn is_valid_expiration_year(eyr: Option<String>) -> bool {
+    eyr.map(|x| x.parse::<i32>().unwrap())
+        .map(|x| x >= 2020 && x <= 2030)
+        .unwrap_or(false)
+}
+
+fn is_valid_height(hgt: Option<String>) -> bool {
+    lazy_static! {
+        static ref FORMAT_PARSER: Regex = Regex::new(r"(\d+)(in|cm)").unwrap();
+    }
+    match hgt {
+        Some(h) => {
+            match FORMAT_PARSER.captures(&h) {
+                Some(c) => {
+                    let value: i32 = c[1].parse().unwrap();
+                    let unit = &c[2];
+                    match unit {
+                        "in" => {
+                            value >= 59 && value <= 76
+                        },
+                        "cm" => {
+                            value >= 150 && value <= 193
+                        },
+                        _ => false
+                    }
+                },
+                None => false
+            }
+
+        },
+        None => false
+    }
+}
+
+fn is_valid_hair_color(hcl: Option<String>) -> bool {
+    lazy_static! {
+        static ref FORMAT_PARSER: Regex = Regex::new(r"#[\da-f]{6}").unwrap();
+    }
+    match hcl {
+        Some(c) => {
+            FORMAT_PARSER.is_match(&c)
+        },
+        None => false
+    }
+}
+
+fn is_valid_eye_color(ecl: Option<String>) -> bool {
+    lazy_static! {
+        static ref FORMAT_PARSER: Regex = Regex::new(r"(amb|blu|brn|gry|grn|hzl|oth)").unwrap();
+    }
+    match ecl {
+        Some(c) => {
+            FORMAT_PARSER.is_match(&c)
+        },
+        None => false
+    }
+}
+
+fn is_valid_passport_id(pid: Option<String>) -> bool {
+    lazy_static! {
+        static ref FORMAT_PARSER: Regex = Regex::new(r"^[\d]{9}$").unwrap();
+    }
+    match pid {
+        Some(id) => {
+            FORMAT_PARSER.is_match(&id)
+        },
+        None => false
+    }
 }
 
 
@@ -95,4 +187,68 @@ mod tests {
             2
         )
     }
+
+
+    #[test]
+    fn birth_year_validates_properly() {
+        assert_eq!(is_valid_birth_year(Some(String::from("2002"))), true);
+        assert_eq!(is_valid_birth_year(Some(String::from("1927"))), true);
+        assert_eq!(is_valid_birth_year(Some(String::from("1969"))), true);
+        assert_eq!(is_valid_birth_year(Some(String::from("2003"))), false);
+        assert_eq!(is_valid_birth_year(Some(String::from("1919"))), false);
+    }
+
+    #[test]
+    fn issue_year_validates_properly() {
+        assert_eq!(is_valid_issue_year(Some(String::from("2015"))), true);
+        assert_eq!(is_valid_issue_year(Some(String::from("2020"))), true);
+        assert_eq!(is_valid_issue_year(Some(String::from("2003"))), false);
+        assert_eq!(is_valid_issue_year(Some(String::from("2021"))), false);
+    }
+
+    #[test]
+    fn expiration_year_validates_properly() {
+        assert_eq!(is_valid_expiration_year(Some(String::from("2020"))), true);
+        assert_eq!(is_valid_expiration_year(Some(String::from("2025"))), true);
+        assert_eq!(is_valid_expiration_year(Some(String::from("2019"))), false);
+        assert_eq!(is_valid_expiration_year(Some(String::from("2031"))), false);
+    }
+
+    #[test]
+    fn height_validates_properly() {
+        assert_eq!(is_valid_height(Some(String::from("60in"))), true);
+        assert_eq!(is_valid_height(Some(String::from("76in"))), true);
+        assert_eq!(is_valid_height(Some(String::from("190cm"))), true);
+        assert_eq!(is_valid_height(Some(String::from("190in"))), false);
+        assert_eq!(is_valid_height(Some(String::from("190"))), false);
+    }
+
+    #[test]
+    fn hair_color_validates_properly() {
+        assert_eq!(is_valid_hair_color(Some(String::from("#123abc"))), true);
+        assert_eq!(is_valid_hair_color(Some(String::from("#e05ee3"))), true);
+        assert_eq!(is_valid_hair_color(Some(String::from("#123abz"))), false);
+        assert_eq!(is_valid_hair_color(Some(String::from("123abc"))), false);
+    }
+
+    #[test]
+    fn eye_color_validates_properly() {
+        assert_eq!(is_valid_eye_color(Some(String::from("amb"))), true);
+        assert_eq!(is_valid_eye_color(Some(String::from("blu"))), true);
+        assert_eq!(is_valid_eye_color(Some(String::from("brn"))), true);
+        assert_eq!(is_valid_eye_color(Some(String::from("gry"))), true);
+        assert_eq!(is_valid_eye_color(Some(String::from("grn"))), true);
+        assert_eq!(is_valid_eye_color(Some(String::from("hzl"))), true);
+        assert_eq!(is_valid_eye_color(Some(String::from("oth"))), true);
+        assert_eq!(is_valid_eye_color(Some(String::from("wat"))), false);
+    }
+
+    #[test]
+    fn passport_id_validates_properly() {
+        assert_eq!(is_valid_passport_id(Some(String::from("000000001"))), true);
+        assert_eq!(is_valid_passport_id(Some(String::from("976934668"))), true);
+        assert_eq!(is_valid_passport_id(Some(String::from("1"))), false);
+        assert_eq!(is_valid_passport_id(Some(String::from("0123456789"))), false);
+    }
+
 }
