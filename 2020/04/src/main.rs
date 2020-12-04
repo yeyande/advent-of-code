@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate lazy_static;
-use regex::Regex;
 use itertools::Itertools;
-use std::fmt::Debug;
+use regex::Regex;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 fn main() {
     let contents = include_str!("../input.txt");
@@ -21,7 +21,7 @@ struct Passport {
     hcl: Option<String>,
     ecl: Option<String>,
     pid: Option<String>,
-    cid: Option<String>
+    cid: Option<String>,
 }
 
 impl Passport {
@@ -34,11 +34,10 @@ impl Passport {
             hcl: args.get("hcl").map(|&x| String::from(x)),
             ecl: args.get("ecl").map(|&x| String::from(x)),
             pid: args.get("pid").map(|&x| String::from(x)),
-            cid: args.get("cid").map(|&x| String::from(x))
+            cid: args.get("cid").map(|&x| String::from(x)),
         }
     }
 }
-
 
 fn is_valid_passport(passport: Passport) -> bool {
     [
@@ -48,8 +47,10 @@ fn is_valid_passport(passport: Passport) -> bool {
         is_valid_height(passport.hgt),
         is_valid_hair_color(passport.hcl),
         is_valid_eye_color(passport.ecl),
-        is_valid_passport_id(passport.pid)
-    ].iter().all(|x| *x)
+        is_valid_passport_id(passport.pid),
+    ]
+    .iter()
+    .all(|x| *x)
 }
 
 fn is_valid_birth_year(byr: Option<String>) -> bool {
@@ -75,26 +76,19 @@ fn is_valid_height(hgt: Option<String>) -> bool {
         static ref FORMAT_PARSER: Regex = Regex::new(r"(\d+)(in|cm)").unwrap();
     }
     match hgt {
-        Some(h) => {
-            match FORMAT_PARSER.captures(&h) {
-                Some(c) => {
-                    let value: i32 = c[1].parse().unwrap();
-                    let unit = &c[2];
-                    match unit {
-                        "in" => {
-                            value >= 59 && value <= 76
-                        },
-                        "cm" => {
-                            value >= 150 && value <= 193
-                        },
-                        _ => false
-                    }
-                },
-                None => false
+        Some(h) => match FORMAT_PARSER.captures(&h) {
+            Some(c) => {
+                let value: i32 = c[1].parse().unwrap();
+                let unit = &c[2];
+                match unit {
+                    "in" => value >= 59 && value <= 76,
+                    "cm" => value >= 150 && value <= 193,
+                    _ => false,
+                }
             }
-
+            None => false,
         },
-        None => false
+        None => false,
     }
 }
 
@@ -103,10 +97,8 @@ fn is_valid_hair_color(hcl: Option<String>) -> bool {
         static ref FORMAT_PARSER: Regex = Regex::new(r"#[\da-f]{6}").unwrap();
     }
     match hcl {
-        Some(c) => {
-            FORMAT_PARSER.is_match(&c)
-        },
-        None => false
+        Some(c) => FORMAT_PARSER.is_match(&c),
+        None => false,
     }
 }
 
@@ -115,10 +107,8 @@ fn is_valid_eye_color(ecl: Option<String>) -> bool {
         static ref FORMAT_PARSER: Regex = Regex::new(r"(amb|blu|brn|gry|grn|hzl|oth)").unwrap();
     }
     match ecl {
-        Some(c) => {
-            FORMAT_PARSER.is_match(&c)
-        },
-        None => false
+        Some(c) => FORMAT_PARSER.is_match(&c),
+        None => false,
     }
 }
 
@@ -127,18 +117,15 @@ fn is_valid_passport_id(pid: Option<String>) -> bool {
         static ref FORMAT_PARSER: Regex = Regex::new(r"^[\d]{9}$").unwrap();
     }
     match pid {
-        Some(id) => {
-            FORMAT_PARSER.is_match(&id)
-        },
-        None => false
+        Some(id) => FORMAT_PARSER.is_match(&id),
+        None => false,
     }
 }
 
-
-
 fn parse_to_passport(group: Vec<&str>) -> Option<Passport> {
     let one_liner = group.join(" ");
-    let parsed = one_liner.split(" ")
+    let parsed = one_liner
+        .split(" ")
         .collect::<Vec<&str>>()
         .into_iter()
         .map(|x| x.split(":").collect::<Vec<&str>>())
@@ -150,16 +137,18 @@ fn parse_to_passport(group: Vec<&str>) -> Option<Passport> {
     let passport = Passport::new(fields);
     match is_valid_passport(passport.clone()) {
         true => Some(passport),
-        false => None
+        false => None,
     }
 }
 
 fn get_valid_passports(batch: Vec<&str>) -> Vec<Passport> {
-    batch.into_iter()
+    batch
+        .into_iter()
         .group_by(|x| *x != "")
         .into_iter()
         .filter(|(matched, _)| *matched)
-        .filter_map(|(_, g)| parse_to_passport(g.collect())).collect()
+        .filter_map(|(_, g)| parse_to_passport(g.collect()))
+        .collect()
 }
 
 #[cfg(test)]
@@ -183,11 +172,11 @@ mod tests {
                 "",
                 "hcl:#cfa07d eyr:2025 pid:166559648",
                 "iyr:2011 ecl:brn hgt:59in",
-            ]).len(),
+            ])
+            .len(),
             2
         )
     }
-
 
     #[test]
     fn birth_year_validates_properly() {
@@ -248,7 +237,9 @@ mod tests {
         assert_eq!(is_valid_passport_id(Some(String::from("000000001"))), true);
         assert_eq!(is_valid_passport_id(Some(String::from("976934668"))), true);
         assert_eq!(is_valid_passport_id(Some(String::from("1"))), false);
-        assert_eq!(is_valid_passport_id(Some(String::from("0123456789"))), false);
+        assert_eq!(
+            is_valid_passport_id(Some(String::from("0123456789"))),
+            false
+        );
     }
-
 }
