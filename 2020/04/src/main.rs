@@ -3,7 +3,6 @@ extern crate lazy_static;
 use itertools::Itertools;
 use regex::Regex;
 use std::collections::HashMap;
-use std::fmt::Debug;
 
 fn main() {
     let contents = include_str!("../input.txt");
@@ -12,63 +11,34 @@ fn main() {
     println!("{}", solution)
 }
 
-#[derive(Debug, Clone)]
-struct Passport {
-    byr: Option<String>,
-    iyr: Option<String>,
-    eyr: Option<String>,
-    hgt: Option<String>,
-    hcl: Option<String>,
-    ecl: Option<String>,
-    pid: Option<String>,
-    cid: Option<String>,
-}
-
-impl Passport {
-    pub fn new(args: HashMap<&str, &str>) -> Passport {
-        Passport {
-            byr: args.get("byr").map(|&x| String::from(x)),
-            iyr: args.get("iyr").map(|&x| String::from(x)),
-            eyr: args.get("eyr").map(|&x| String::from(x)),
-            hgt: args.get("hgt").map(|&x| String::from(x)),
-            hcl: args.get("hcl").map(|&x| String::from(x)),
-            ecl: args.get("ecl").map(|&x| String::from(x)),
-            pid: args.get("pid").map(|&x| String::from(x)),
-            cid: args.get("cid").map(|&x| String::from(x)),
-        }
-    }
-}
-
-fn is_valid_passport(passport: Passport) -> bool {
+fn is_valid_passport(passport: HashMap<String, String>) -> bool {
     [
-        is_valid_birth_year(passport.byr),
-        is_valid_issue_year(passport.iyr),
-        is_valid_expiration_year(passport.eyr),
-        is_valid_height(passport.hgt),
-        is_valid_hair_color(passport.hcl),
-        is_valid_eye_color(passport.ecl),
-        is_valid_passport_id(passport.pid),
+        is_valid_birth_year(passport.get("byr").map(|x| x.clone())),
+        is_valid_issue_year(passport.get("iyr").map(|x| x.clone())),
+        is_valid_expiration_year(passport.get("eyr").map(|x| x.clone())),
+        is_valid_height(passport.get("hgt").map(|x| x.clone())),
+        is_valid_hair_color(passport.get("hcl").map(|x| x.clone())),
+        is_valid_eye_color(passport.get("ecl").map(|x| x.clone())),
+        is_valid_passport_id(passport.get("pid").map(|x| x.clone())),
     ]
     .iter()
     .all(|x| *x)
 }
 
+fn number_is_in_range(val: Option<String>, (min, max): (i32, i32)) -> bool {
+    val.map(|x| x.parse::<i32>().unwrap()).map(|x| x >= min && x <= max).unwrap_or(false)
+}
+
 fn is_valid_birth_year(byr: Option<String>) -> bool {
-    byr.map(|x| x.parse::<i32>().unwrap())
-        .map(|x| x >= 1920 && x <= 2002)
-        .unwrap_or(false)
+    number_is_in_range(byr, (1920, 2002))
 }
 
 fn is_valid_issue_year(iyr: Option<String>) -> bool {
-    iyr.map(|x| x.parse::<i32>().unwrap())
-        .map(|x| x >= 2010 && x <= 2020)
-        .unwrap_or(false)
+    number_is_in_range(iyr, (2010, 2020))
 }
 
 fn is_valid_expiration_year(eyr: Option<String>) -> bool {
-    eyr.map(|x| x.parse::<i32>().unwrap())
-        .map(|x| x >= 2020 && x <= 2030)
-        .unwrap_or(false)
+    number_is_in_range(eyr, (2020, 2030))
 }
 
 fn is_valid_height(hgt: Option<String>) -> bool {
@@ -78,11 +48,11 @@ fn is_valid_height(hgt: Option<String>) -> bool {
     match hgt {
         Some(h) => match FORMAT_PARSER.captures(&h) {
             Some(c) => {
-                let value: i32 = c[1].parse().unwrap();
+                let value: Option<String> = Some(String::from(&c[1]));
                 let unit = &c[2];
                 match unit {
-                    "in" => value >= 59 && value <= 76,
-                    "cm" => value >= 150 && value <= 193,
+                    "in" => number_is_in_range(value, (59, 76)),
+                    "cm" => number_is_in_range(value, (150, 193)),
                     _ => false,
                 }
             }
@@ -122,7 +92,7 @@ fn is_valid_passport_id(pid: Option<String>) -> bool {
     }
 }
 
-fn parse_to_passport(group: Vec<&str>) -> Option<Passport> {
+fn parse_to_passport(group: Vec<&str>) -> Option<HashMap<String, String>> {
     let one_liner = group.join(" ");
     let parsed = one_liner
         .split(' ')
@@ -130,18 +100,17 @@ fn parse_to_passport(group: Vec<&str>) -> Option<Passport> {
         .into_iter()
         .map(|x| x.split(':').collect::<Vec<&str>>())
         .collect::<Vec<Vec<&str>>>();
-    let mut fields = HashMap::new();
+    let mut fields : HashMap<String, String>= HashMap::new();
     for v in parsed {
-        fields.insert(v[0], v[1]);
+        fields.insert(v[0].to_string(), v[1].to_string());
     }
-    let passport = Passport::new(fields);
-    match is_valid_passport(passport.clone()) {
-        true => Some(passport),
+    match is_valid_passport(fields.clone()) {
+        true => Some(fields.clone()),
         false => None,
     }
 }
 
-fn get_valid_passports(batch: Vec<&str>) -> Vec<Passport> {
+fn get_valid_passports(batch: Vec<&str>) -> Vec<HashMap<String, String>> {
     batch
         .into_iter()
         .group_by(|x| *x != "")
