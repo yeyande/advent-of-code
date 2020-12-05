@@ -1,12 +1,36 @@
+use std::collections::HashMap;
 fn main() {
     let contents = include_str!("../input.txt");
-    let solution = solve(contents.lines().into_iter().collect());
-    println!("{}", solution);
+    let solution_1 = solve_part_1(contents.lines().into_iter().collect());
+    println!("Part 1: {}", solution_1);
+    let solution_2 = solve_part_2(contents.lines().into_iter().collect());
+    println!("Part 2: {}", solution_2)
 }
 
-fn solve(seats: Vec<&str>) -> u32 {
+fn solve_part_1(seats: Vec<&str>) -> u32 {
     let seat_ids: Vec<u32> = seats.iter().map(|x| get_seat_id(get_seat(x))).collect();
     *seat_ids.iter().max().unwrap()
+}
+
+fn solve_part_2(seats: Vec<&str>) -> u32 {
+    let seat_ids: HashMap<u32, bool> = seats.iter().map(|x| (get_seat_id(get_seat(x)), true)).collect();
+    let mut my_seat_id : u32 = 0;
+    for x in 1..(127*8+7) {
+        match seat_ids.get(&x) {
+            Some(_) => continue,
+            None => {
+                let (left, right) = (x-1, x+1);
+                match (seat_ids.get(&left), seat_ids.get(&right)) {
+                    (Some(_), Some(_)) => {
+                        my_seat_id = x;
+                        break
+                    }
+                    _ => continue
+                }
+            }
+        }
+    }
+    my_seat_id
 }
 
 fn get_seat_id((row, col): (u32, u32)) -> u32 {
@@ -55,8 +79,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn works_on_sample_input() {
-        assert_eq!(solve(vec!["FBFBBFFRLR", "BFFFBBFRRR", "FFFBBBFRRR", "BBFFBBFRLL"]), 820)
+    fn part_1works_on_sample_input() {
+        assert_eq!(solve_part_1(vec!["FBFBBFFRLR", "BFFFBBFRRR", "FFFBBBFRRR", "BBFFBBFRLL"]), 820)
     }
 
     #[test]
