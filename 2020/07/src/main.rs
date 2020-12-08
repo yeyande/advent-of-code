@@ -1,25 +1,54 @@
 use std::collections::HashMap;
 
 fn main() {
-    println!("Hello, world!");
+    let contents = include_str!("../input.txt");
+    let rules: Vec<&str> = contents.lines().into_iter().collect();
+    let solution: usize = solve(rules, "shiny gold".to_string());
+    println!("{}", solution)
 }
 
-fn parse_rule(rule: &str) -> (String, Vec<(usize, &str)>) {
+fn has_path_between(bag: String, key: String) -> bool {
+    true
+}
+
+fn tmp(_: i32) -> bool {
+    true
+}
+
+fn solve(rules: Vec<&str>, key: String) -> usize {
+    let parsed = parse_rules(rules);
+    let paths: Vec<(usize, String)>= parsed.values().filter(|&conn| conn.iter().map(|(_, bag)| has_path_between(bag.to_string(), key.clone())).fold(true, |a, b| a & b)).collect::Vec<(usize, String)>();
+    paths.len()
+}
+
+fn parse_connection(bag: &str) -> Option<(usize, String)> {
+    match bag {
+        "no other bags." => None,
+        _ => {
+            let bag_info: Vec<&str> = bag.splitn(2, ' ').collect();
+            let count = bag_info[0].parse().unwrap();
+            let connection = bag_info[1].trim().replace(" bags", "").replace(" bag", "").replace(".", "");
+
+            Some((count, connection))
+        }
+    }
+}
+
+fn parse_rule(rule: &str) -> (String, Vec<(usize, String)>) {
     let split: Vec<&str> = rule.split(" contain ").collect();
     let (key_bag, bag_connections) = (split[0], split[1]);
     let key: String = key_bag.replace(" bags", "");
-    let connections: Vec<(usize, &str)> = bag_connections.split(", ").collect::<Vec<&str>>().iter().map(|bag|
-            let bag_info: Vec<&str> = bag.splitn(1, " ").collect(),
-            let (count, connection): (usize, &str) = (bag_info[0].parse().unwrap(), bag_info[1]);
-
-            //let bag = bag_definition.replace("bags", "").replace("bag", "").replace(".", "");
-            (1, *connection)
-             ).collect();
+    let connections: Vec<(usize, String)> = bag_connections
+        .split(", ")
+        .collect::<Vec<&str>>()
+        .iter()
+        .filter_map(|bag| parse_connection(*bag))
+        .collect();
     return (key, connections)
 }
 
-fn parse_rules(rules: Vec<&str>) -> HashMap<String, Vec<(usize, &str)>> {
-    let mut graph: HashMap<String, Vec<(usize, &str)>> = HashMap::new();
+fn parse_rules(rules: Vec<&str>) -> HashMap<String, Vec<(usize, String)>> {
+    let mut graph: HashMap<String, Vec<(usize, String)>> = HashMap::new();
     for rule in rules.iter() {
         let (key, value) = parse_rule(rule);
         graph.insert(key, value);
@@ -32,15 +61,33 @@ mod tests {
     use super::*;
 
     #[test]
+    fn should_work_for_sample_input() {
+        assert_eq!(
+            solve(vec![
+                "light red bags contain 1 bright white bag, 2 muted yellow bags.",
+                "dark orange bags contain 3 bright white bags, 4 muted yellow bags.",
+                "bright white bags contain 1 shiny gold bag.",
+                "muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.",
+                "shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.",
+                "dark olive bags contain 3 faded blue bags, 4 dotted black bags.",
+                "vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.",
+                "faded blue bags contain no other bags.",
+                "dotted black bags contain no other bags.",
+            ], "shiny gold".to_string()),
+            4
+        );
+    }
+
+    #[test]
     fn should_parse_rules_correctly() {
-        let expected: HashMap<String, Vec<(usize, &str)>> = vec![
-                ("light red".to_string(), vec![(1, "bright white"), (2, "muted yellow")]),
-                ("dark orange".to_string(), vec![(3, "bright white"), (4, "muted yellow")]),
-                ("bright white".to_string(), vec![(1, "shiny gold")]),
-                ("muted yellow".to_string(), vec![(2, "shiny gold"), (9, "faded blue")]),
-                ("shiny gold".to_string(), vec![(1, "dark olive"), (2, "vibrant plum")]),
-                ("dark olive".to_string(), vec![(3, "faded blue"), (4, "dotted black")]),
-                ("vibrant plum".to_string(), vec![(5, "faded blue"), (6, "dotted black")]),
+        let expected: HashMap<String, Vec<(usize, String)>> = vec![
+                ("light red".to_string(), vec![(1, "bright white".to_string()), (2, "muted yellow".to_string())]),
+                ("dark orange".to_string(), vec![(3, "bright white".to_string()), (4, "muted yellow".to_string())]),
+                ("bright white".to_string(), vec![(1, "shiny gold".to_string())]),
+                ("muted yellow".to_string(), vec![(2, "shiny gold".to_string()), (9, "faded blue".to_string())]),
+                ("shiny gold".to_string(), vec![(1, "dark olive".to_string()), (2, "vibrant plum".to_string())]),
+                ("dark olive".to_string(), vec![(3, "faded blue".to_string()), (4, "dotted black".to_string())]),
+                ("vibrant plum".to_string(), vec![(5, "faded blue".to_string()), (6, "dotted black".to_string())]),
                 ("faded blue".to_string(), vec![]),
                 ("dotted black".to_string(), vec![]),
             ].into_iter().collect();
