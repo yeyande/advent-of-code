@@ -7,7 +7,7 @@ fn main() {
     println!("{}", solution)
 }
 
-fn get_node(connections: Vec<(usize, String)>, key: String) -> Option<String> {
+fn get_node(connections: Vec<(String, String)>, key: String) -> Option<String> {
     let direct: Vec<String>= connections.iter().map(|(_, x)| x.clone()).filter(|x| *x == key).collect();
     match direct.len() {
         0 => None,
@@ -15,17 +15,28 @@ fn get_node(connections: Vec<(usize, String)>, key: String) -> Option<String> {
     }
 }
 
-fn get_all_connections(node: String, graph: HashMap<String, Vec<(usize, String)>>) -> Vec<String> {
-    let mut connections: Vec<String> = vec![];
-    graph.get(&node).unwrap().iter().map(|(_, conn)| get_connections_helper(connections.clone(), conn.to_string(), graph.clone()));
-    println!("{:?}", connections);
-    connections
+fn get_nodes(connections: Vec<(String, String)>, key: String) -> Vec<String> {
+    let mut not_visited: Vec<String> = connections.clone().iter().map(|(c, _)| c.to_string()).collect();
+    not_visited.sort();
+    not_visited.dedup();
+    let mut connected: Vec<String> = connections.clone().iter().filter(|(_, conn)| conn.to_string() == key).map(|(bag, _)| bag.to_string()).collect();
+    not_visited.retain(|e| ! connected.contains(e));
+    for _ in 0..10 { 
+        for conn in connected.clone().iter() {
+            let mut new_connections: Vec<String> = connections.clone().iter().filter(|(_, x)| x.to_string() == conn.to_string()).map(|(bag, _)| bag.to_string()).collect();
+            connected.append(&mut new_connections);
+        }
+        not_visited.retain(|e| ! connected.contains(e));
+    }
+    connected.sort();
+    connected.dedup();
+    connected
 }
 
-fn get_connections_helper(mut connections: Vec<String>, connection: String, graph: HashMap<String, Vec<(usize, String)>>) {
-    println!("{:?}", connections);
-    connections.push(connection.clone());
-    connections.append(&mut get_all_connections(connection.to_string(), graph.clone()))
+fn get_all_connections(node: String, graph: HashMap<String, Vec<(usize, String)>>) -> Vec<String> {
+    let connections: Vec<(String, String)> = graph.iter().map(|(k, v)| v.iter().map(|(_, bag)| (k.to_string(), bag.to_string())).collect::<Vec<(String, String)>>()).flatten().collect();
+    let filtered: Vec<String> = get_nodes(connections.clone(), node);
+    filtered
 }
 
 fn solve(rules: Vec<&str>, key: String) -> usize {
