@@ -7,18 +7,29 @@ fn main() {
     println!("{}", solution)
 }
 
-fn has_path_between(bag: String, key: String) -> bool {
-    true
+fn get_node(connections: Vec<(usize, String)>, key: String) -> Option<String> {
+    let direct: Vec<String>= connections.iter().map(|(_, x)| x.clone()).filter(|x| *x == key).collect();
+    match direct.len() {
+        0 => None,
+        _ => Some(key)
+    }
 }
 
-fn tmp(_: i32) -> bool {
-    true
+fn get_all_connections(node: String, graph: HashMap<String, Vec<(usize, String)>>) -> Vec<String> {
+    let mut connections: Vec<String> = vec![];
+    graph.get(&node).unwrap().iter().map(|(_, conn)| get_connections_helper(&connections, conn.to_string(), graph.clone()));
+    connections
+}
+
+fn get_connections_helper(mut connections: &Vec<String>, connection: String, graph: HashMap<String, Vec<(usize, String)>>) {
+    connections.push(connection);
+    connections.append(&mut get_all_connections(connection.to_string(), graph.clone()))
 }
 
 fn solve(rules: Vec<&str>, key: String) -> usize {
     let parsed = parse_rules(rules);
-    let paths: Vec<(usize, String)>= parsed.values().filter(|&conn| conn.iter().map(|(_, bag)| has_path_between(bag.to_string(), key.clone())).fold(true, |a, b| a & b)).collect::Vec<(usize, String)>();
-    paths.len()
+    let x: Vec<String> = parsed.values().filter_map(|conn| get_node(conn.to_vec(), key.to_string())).collect();
+    x.len()
 }
 
 fn parse_connection(bag: &str) -> Option<(usize, String)> {
