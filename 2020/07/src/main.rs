@@ -3,8 +3,10 @@ use std::collections::HashMap;
 fn main() {
     let contents = include_str!("../input.txt");
     let rules: Vec<&str> = contents.lines().into_iter().collect();
-    let solution: usize = solve(rules, "shiny gold".to_string());
-    println!("{}", solution)
+    let solution_1: usize = solve_1(rules.clone(), "shiny gold".to_string());
+    println!("{}", solution_1);
+    let solution_2: usize = solve_2(rules.clone(), "shiny gold".to_string());
+    println!("{}", solution_2);
 }
 
 fn get_nodes(connections: Vec<(String, String)>, key: String) -> Vec<String> {
@@ -13,7 +15,7 @@ fn get_nodes(connections: Vec<(String, String)>, key: String) -> Vec<String> {
     not_visited.dedup();
     let mut connected: Vec<String> = connections.clone().iter().filter(|(_, conn)| conn.to_string() == key).map(|(bag, _)| bag.to_string()).collect();
     not_visited.retain(|e| ! connected.contains(e));
-    for _ in 0..8 { 
+    for _ in 0..8 {
         for conn in connected.clone().iter() {
             let mut new_connections: Vec<String> = connections.clone().iter().filter(|(_, x)| x.to_string() == conn.to_string()).map(|(bag, _)| bag.to_string()).collect();
             connected.append(&mut new_connections);
@@ -31,11 +33,28 @@ fn get_all_connections(node: String, graph: HashMap<String, Vec<(usize, String)>
     filtered
 }
 
-fn solve(rules: Vec<&str>, key: String) -> usize {
+fn solve_1(rules: Vec<&str>, key: String) -> usize {
     let parsed = parse_rules(rules);
     //let x: Vec<String> = parsed.values().filter_map(|conn| get_node(conn.to_vec(), key.to_string())).collect();
     let x: Vec<String> = get_all_connections(key, parsed);
     x.len()
+}
+
+fn solve_2(rules: Vec<&str>, key: String) -> usize {
+    let parsed = parse_rules(rules);
+    let mut to_search: Vec<(usize, String)> = parsed.get(&key).unwrap().to_vec();
+    let mut sum: usize = 0;
+    loop {
+        match to_search.pop() {
+            None => break,
+            Some((count, bag)) => {
+                sum = sum + count;
+                let mut new_searches: Vec<(usize, String)> = parsed.get(&bag).unwrap().to_vec().iter().map(|(c, b)| (c*count, b.to_string())).collect();
+                to_search.append(&mut new_searches);
+            }
+        }
+    }
+    sum
 }
 
 fn parse_connection(bag: &str) -> Option<(usize, String)> {
@@ -77,10 +96,28 @@ fn parse_rules(rules: Vec<&str>) -> HashMap<String, Vec<(usize, String)>> {
 mod tests {
     use super::*;
 
+    //#[test]
+    //fn solve_1_should_work_for_sample_input() {
+    //    assert_eq!(
+    //        solve_1(vec![
+    //            "light red bags contain 1 bright white bag, 2 muted yellow bags.",
+    //            "dark orange bags contain 3 bright white bags, 4 muted yellow bags.",
+    //            "bright white bags contain 1 shiny gold bag.",
+    //            "muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.",
+    //            "shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.",
+    //            "dark olive bags contain 3 faded blue bags, 4 dotted black bags.",
+    //            "vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.",
+    //            "faded blue bags contain no other bags.",
+    //            "dotted black bags contain no other bags.",
+    //        ], "shiny gold".to_string()),
+    //        4
+    //    );
+    //}
+
     #[test]
-    fn should_work_for_sample_input() {
+    fn solve_2_should_work_for_sample_input() {
         assert_eq!(
-            solve(vec![
+            solve_2(vec![
                 "light red bags contain 1 bright white bag, 2 muted yellow bags.",
                 "dark orange bags contain 3 bright white bags, 4 muted yellow bags.",
                 "bright white bags contain 1 shiny gold bag.",
@@ -91,7 +128,7 @@ mod tests {
                 "faded blue bags contain no other bags.",
                 "dotted black bags contain no other bags.",
             ], "shiny gold".to_string()),
-            4
+            32
         );
     }
 
