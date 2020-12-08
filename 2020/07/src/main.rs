@@ -7,21 +7,13 @@ fn main() {
     println!("{}", solution)
 }
 
-fn get_node(connections: Vec<(String, String)>, key: String) -> Option<String> {
-    let direct: Vec<String>= connections.iter().map(|(_, x)| x.clone()).filter(|x| *x == key).collect();
-    match direct.len() {
-        0 => None,
-        _ => Some(key)
-    }
-}
-
 fn get_nodes(connections: Vec<(String, String)>, key: String) -> Vec<String> {
     let mut not_visited: Vec<String> = connections.clone().iter().map(|(c, _)| c.to_string()).collect();
     not_visited.sort();
     not_visited.dedup();
     let mut connected: Vec<String> = connections.clone().iter().filter(|(_, conn)| conn.to_string() == key).map(|(bag, _)| bag.to_string()).collect();
     not_visited.retain(|e| ! connected.contains(e));
-    for _ in 0..10 { 
+    for _ in 0..8 { 
         for conn in connected.clone().iter() {
             let mut new_connections: Vec<String> = connections.clone().iter().filter(|(_, x)| x.to_string() == conn.to_string()).map(|(bag, _)| bag.to_string()).collect();
             connected.append(&mut new_connections);
