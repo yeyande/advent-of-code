@@ -17,13 +17,29 @@ fn is_valid_number(value: i64, preamble: Vec<i64>) -> bool {
     return matches.len() > 0
 }
 
+fn find_contiguous_numbers_with_sum(list: Vec<i64>, target: i64) -> Vec<i64> {
+    let (mut start, mut stop) : (usize, usize) = (0, 1);
+    loop {
+        let s: i64 = list[start..stop].iter().sum();
+        match target.cmp(&s) {
+            std::cmp::Ordering::Greater => stop = stop + 1,
+            std::cmp::Ordering::Less => start = start + 1,
+            std::cmp::Ordering::Equal => return list[start..stop].to_vec(),
+        }
+    }
+}
+
 fn solve(cipher: Vec<&str>, preamble_size: usize) -> i64 {
     let parsed: Vec<i64> = cipher.iter().filter_map(|x| x.parse().ok()).collect();
     let (start, stop) : (usize, usize) = (preamble_size, parsed.len()-1);
     for n in start..stop {
         match is_valid_number(parsed[n].clone(), parsed[n-preamble_size..n].to_vec()) {
             true => continue,
-            false => return parsed[n]
+            false => { 
+                let numbers: Vec<i64> = find_contiguous_numbers_with_sum(parsed.clone(), parsed[n]);
+                let (min, max): (i64, i64) = (*numbers.iter().min().unwrap(), *numbers.iter().max().unwrap());
+                return min + max
+            }
         }
     }
     0
@@ -58,7 +74,7 @@ mod tests {
                 "309",
                 "576",
             ], 5),
-            127
+            62
         );
     }
 }
