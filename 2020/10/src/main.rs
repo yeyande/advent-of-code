@@ -28,14 +28,37 @@ fn get_jolt_differences(adapters: Vec<u32>) -> (u32, u32, u32) {
               )
 }
 
+fn get_paths(current: u32, adapters: Vec<u32>, index: usize) -> usize {
+    println!("{:?}", adapters);
+    let bounds = match 3.cmp(&(adapters.len() - index - 1)) {
+            std::cmp::Ordering::Greater => adapters.len() - index,
+            std::cmp::Ordering::Less => 4,
+            std::cmp::Ordering::Equal => 4,
+    };
+    println!("{}", bounds);
+    match bounds {
+        1 => 1,
+        _ => {
+            let valid_numbers: Vec<&u32> = adapters[index+1..index+bounds].iter().filter(|x| **x <=3 || current >= *x-3).collect();
+            valid_numbers.len()
+        }
+    }
+}
+
+fn get_adapter_combinations(adapters: Vec<u32>) -> usize {
+    let mut sorted = adapters.clone();
+    sorted.sort();
+    sorted.insert(0, 0);
+    sorted.push(sorted.iter().max().unwrap()+3);
+    let paths: Vec<usize> = sorted.iter().enumerate().map(|(idx, jolt)| get_paths(*jolt, sorted.clone(), idx)).collect();
+    println!("{:?}", paths);
+    paths.into_iter().filter(|x| *x != 0).fold(1, |a, b| a*b)/2
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn should_work_for_sample_input() {
-        assert_eq!(
-            get_jolt_differences(vec![
+    static TEST_INPUT_1: [u32; 11] = [
                 16,
                 10,
                 15,
@@ -47,11 +70,8 @@ mod tests {
                 6,
                 12,
                 4,
-            ]), 
-            (7, 0, 5),
-        );
-        assert_eq!(
-            get_jolt_differences(vec![
+            ];
+    static TEST_INPUT_2: [u32; 31] = [
                 28,
                 33,
                 18,
@@ -83,8 +103,29 @@ mod tests {
                 34,
                 10,
                 3,
-            ]),
+            ];
+
+    #[test]
+    fn get_jolt_differences_should_work_for_sample_input() {
+        assert_eq!(
+            get_jolt_differences(TEST_INPUT_1.to_vec()),
+            (7, 0, 5),
+        );
+        assert_eq!(
+            get_jolt_differences(TEST_INPUT_2.to_vec()),
             (22, 0, 10)
+        );
+    }
+
+    #[test]
+    fn get_adapter_combinations_should_work_for_sample_input() {
+        assert_eq!(
+            get_adapter_combinations(TEST_INPUT_1.to_vec()),
+            8,
+        );
+        assert_eq!(
+            get_adapter_combinations(TEST_INPUT_2.to_vec()),
+            19208
         );
     }
 }
