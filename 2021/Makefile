@@ -1,7 +1,11 @@
 BUILD = ./build
 BIN = $(BUILD)/Main
 
-all: $(BIN)
+all: $(BIN) run
+
+.PHONY: run
+run: $(BIN)
+	$(BIN)
 
 $(BIN): Main.hs | $(BUILD)
 	ghc -outputdir $(BUILD) -o $@ $^
