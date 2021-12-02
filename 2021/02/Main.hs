@@ -1,43 +1,36 @@
 import qualified Data.List as L
 import qualified Data.Maybe as M
 
-data Direction = Forward Int | Down Int | Up Int
+data Motion = Motion { horizontal :: Int
+                     , depth :: Int
+                     , aim :: Int
+    } deriving (Show)
 
-parse :: String -> Maybe (Int, Int)
+initialMotion :: Motion
+initialMotion = Motion 0 0 0
+
+parse :: String -> Maybe Motion
 parse x = 
     case L.elemIndex ' ' x of
         Just n -> case splitAt n x of
-            ("forward", k) -> Just (read k, 0)
-            ("down", k)    -> Just (0, read k)
-            ("up", k)      -> Just (0, negate (read k))
+            ("forward", k) -> Just Motion{horizontal=read k, depth=0, aim=0}
+            ("down", k)    -> Just Motion{horizontal=0, depth=read k, aim=read k}
+            ("up", k)      -> Just Motion{horizontal=0, depth=negate (read k), aim=negate (read k)}
         Nothing -> Nothing
 
+moveImmediate :: Motion -> Motion -> Motion
+moveImmediate (Motion x1 depth1 _) (Motion x2 depth2 _) = Motion (x1+x2) (depth1+depth2) 0
 
-solve :: [String] -> Int
-solve l = (fst coordinates) * (snd coordinates)
-    where coordinates = foldl (\(x1, y1) (x2, y2) -> (x1+x2, y1+y2)) (0, 0) (M.mapMaybe parse l)
+moveWithAim :: Motion -> Motion -> Motion
+moveWithAim (Motion horizontal depth aim) (Motion 0 _ aim2) = Motion horizontal depth (aim+aim2)
+moveWithAim (Motion horizontal depth aim) (Motion distance _ _) = Motion (horizontal+distance) (depth+(aim*distance)) aim
 
-parse2 :: String -> Maybe (Int, Int, Int)
-parse2 x = 
-    case L.elemIndex ' ' x of
-        Just n -> case splitAt n x of
-            ("forward", k) -> Just (read k, 0, 0)
-            ("down", k)    -> Just (0, 0, read k)
-            ("up", k)      -> Just (0, 0, negate (read k))
-        Nothing -> Nothing
-
-solve2 :: [String] -> Int
-solve2 l = x*y
-    where (x, y, _) = foldl moveSubmarine (0,0,0) (M.mapMaybe parse2 l)
-
-moveSubmarine :: (Int, Int, Int) -> (Int, Int, Int) -> (Int, Int, Int)
-moveSubmarine (x, depth, aim) (0, 0, aim2) = (x, depth, aim+aim2)
-moveSubmarine (x, depth, aim) (distance, 0, 0) = (x+distance, depth+(aim*distance), aim)
+solve :: (Motion -> Motion -> Motion) -> [String] -> Int
+solve movementAlgorithm l = (horizontal motion)*(depth motion)
+    where motion = foldl movementAlgorithm initialMotion (M.mapMaybe parse l)
 
 main :: IO ()
 main = do
     input <- readFile "input.txt"
-    let part1 = solve $ lines input
-    let part2 = solve2 $ lines input
-    putStrLn $ "Part 1: " ++ (show part1)
-    putStrLn $ "Part 2: " ++ (show part2)
+    putStrLn $ "Part 1: " ++ (show $ solve moveImmediate $ lines input)
+    putStrLn $ "Part 2: " ++ (show $ solve moveWithAim $ lines input)
