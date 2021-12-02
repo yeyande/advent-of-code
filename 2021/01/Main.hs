@@ -12,7 +12,7 @@ getPairs :: [a] -> [(a, a)]
 getPairs xs = zip xs (drop 1 xs)
 
 solve :: (Ord a) => [(a, a)] -> Int
-solve depthPairs = length $ filter (\x -> x) $ map depthHasIncreased depthPairs
+solve depthPairs = length $ filter id $ map depthHasIncreased depthPairs
 
 main :: IO ()
 main = do
