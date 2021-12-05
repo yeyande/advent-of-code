@@ -8,7 +8,7 @@ run: $(BIN)
 	$(BIN)
 
 $(BIN): Main.hs | $(BUILD)
-	ghc -outputdir $(BUILD) -o $@ $^
+	ghc -dynamic -O2 -outputdir $(BUILD) -o $@ $^
 	
 $(BUILD):
 	mkdir -p $@
