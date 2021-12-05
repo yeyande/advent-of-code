@@ -22,7 +22,14 @@ getPointsOnSeg (LineSeg (x1, y1) (x2, y2))
         LT -> [(x, y1) | x <- [x1..x2]]
         GT -> [(x, y1) | x <- [x2..x1]]
         EQ -> [(x1, y1)]
-    | otherwise = undefined
+    | otherwise = 
+        let (rise, run) = ((y2-y1),(x2-x1))
+            step = div rise run
+        in
+        case compare x1 x2 of
+            LT -> takeWhile (\(x,_) -> x <= (x2)) [(x, step*(x-x1)+y1) | x <- [x1..x2]]
+            GT -> takeWhile (\(x,_) -> x <= (x1)) [(x, step*(x-x2)+y2) | x <- [x2..x1]]
+
 
 makeLineSegment :: String -> LineSeg
 makeLineSegment seg = LineSeg (x1, y1) (x2, y2)
@@ -36,7 +43,12 @@ solve l = length $ filter (\x -> x >= 2) $ map length $ group $ sort $ concat $ 
     where segs = parse l
           wantedSegs = filter (\x -> isVertical x || isHorizontal x) segs
 
+solve2 :: [String] -> Int
+solve2 l = length $ filter (\x -> x >= 2) $ map length $ group $ sort $ concat $ map getPointsOnSeg segs
+    where segs = parse l
+
 main :: IO()
 main = do
     input <- readFile "input.txt"
     putStrLn $ "Part 1: " ++ (show $ solve $ lines input)
+    putStrLn $ "Part 2: " ++ (show $ solve2 $ lines input)
