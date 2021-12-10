@@ -13,11 +13,18 @@ getClosingPair '(' = ')'
 getClosingPair '[' = ']'
 getClosingPair '<' = '>'
 
-getScore :: Char -> Int
-getScore ')' = 3
-getScore ']' = 57
-getScore '}' = 1197
-getScore '>' = 25137
+getErrorScore :: Char -> Int
+getErrorScore ')' = 3
+getErrorScore ']' = 57
+getErrorScore '}' = 1197
+getErrorScore '>' = 25137
+
+
+getAutocompleteScore :: Char -> Int
+getAutocompleteScore ')' = 1
+getAutocompleteScore ']' = 2
+getAutocompleteScore '}' = 3
+getAutocompleteScore '>' = 4
 
 step :: Parser -> Parser
 step (Parser (c:cs) p i )
@@ -30,8 +37,19 @@ parse :: Parser -> Parser
 parse p = step $ last $ takeWhile (\p -> (not $ null $ getCharacters p) && (null $ getIllegalCharacters p)) $ iterate step p
 
 solve :: [String] -> Int
-solve s = sum $ map (\p -> getScore $ head $ getIllegalCharacters p) $ filter (\p -> not $ null $ getIllegalCharacters p) $ map parse parsers
+solve s = sum $ map (\p -> getErrorScore $ head $ getIllegalCharacters p) $ filter (\p -> not $ null $ getIllegalCharacters p) $ map parse parsers
     where parsers = map initParser s
 
+solve2 :: [String] -> Int
+solve2 s = scores !! ((length scores) `div` 2)
+    where parsers = map initParser s
+          incompleteParsers = filter (\p -> null $ getIllegalCharacters p) $ map parse parsers
+          autocompleted = map (\p -> map getClosingPair (getParsedCharacters p)) incompleteParsers
+          scores = sort $ map (\autocomplete -> foldr (\x acc -> (5*acc)+x) 0 $ map getAutocompleteScore autocomplete) autocompleted
+          
+
 main :: IO ()
-main = undefined
+main = do
+    input <- readFile "input.txt"
+    putStrLn $ "Part 1: " ++ (show $ solve $ lines input)
+    putStrLn $ "Part 2: " ++ (show $ solve2 $ lines input)
