@@ -1,6 +1,6 @@
 use std::fs;
 
-fn solve_1(contents: &str) -> u32 {
+fn parse_input(contents: &str) -> Vec<u32> {
     contents.split("\n\n")
         .map(|calories| 
             calories.split("\n")
@@ -8,14 +8,26 @@ fn solve_1(contents: &str) -> u32 {
                 .filter(|r| r.is_ok())
                 .fold(0, |acc, cal| acc + cal.unwrap())
                 )
-        .collect::<Vec<u32>>()
-        .into_iter().max().unwrap_or(0)
+        .collect()
+}
+
+fn solve_1(contents: &str) -> u32 {
+    parse_input(contents).into_iter().max().unwrap_or(0)
+}
+
+fn solve_2(contents: &str) -> u32 {
+    let mut calories = parse_input(contents);
+    calories.sort();
+    calories.reverse();
+    calories[0] + calories[1] + calories[2]
 }
 
 fn main() {
     let contents = fs::read_to_string("input.txt").expect("Could not read input");
     let solution_1 = solve_1(&contents);
     println!("{:?}", solution_1);
+    let solution_2 = solve_2(&contents);
+    println!("{:?}", solution_2);
 }
 
 #[cfg(test)]
