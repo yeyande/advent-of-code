@@ -39,8 +39,36 @@ fn solve_1(contents: &str) -> u32 {
         .fold(0, |acc, priority| acc + (priority as u32))
 }
 
+fn get_common_items_between_bags(bags: &[&str]) -> Vec<char> {
+    let bag_1 = bags[0];
+    let bag_2 = bags[1];
+    let bag_3 = bags[2];
+    let mut common_values: Vec<char> = bag_1.chars()
+        .filter(|c| bag_2.contains(*c) && bag_3.contains(*c))
+        .collect();
+    common_values.sort();
+    common_values.dedup();
+    common_values
+}
+
 fn solve_2(contents: &str) -> u32 {
-    0
+    contents.split("\n")
+        .collect::<Vec<&str>>()
+        .as_slice()
+        .chunks(3)
+        .filter_map(|bags| 
+            if bags.len() > 1 { 
+                Some(
+                    get_common_items_between_bags(bags).into_iter()
+                        .map(item_to_priority)
+                        .fold(0, |acc, priority| acc + (priority as u32))
+                ) 
+            } 
+            else { 
+                None 
+            }
+        )
+        .fold(0, |acc, priority| acc + (priority as u32))
 }
 
 fn main() {
@@ -69,7 +97,7 @@ mod tests {
         let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
         assert_eq!(
             solve_2(&sample_input),
-            0
+            70
         )
     }
 }
