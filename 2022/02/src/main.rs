@@ -1,20 +1,44 @@
 use std::fs;
 
 #[derive(Clone, Copy)]
+enum ParseResult {
+    C(Choice),
+    R(MatchResult)
+}
+
+#[derive(Debug, Clone, Copy)]
 enum Choice {
     Rock,
     Paper,
     Scissors,
 }
 
-#[derive(Clone, Copy)]
+impl From<ParseResult> for Choice {
+    fn from(result: ParseResult) -> Self {
+        match result {
+            ParseResult::C(choice) => choice,
+            _ => panic!("Could not convert result")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 enum MatchResult {
     Win,
     Draw,
     Loss,
 }
 
-fn parse_input(contents: &str) -> Vec<(Choice, Choice)> {
+impl From<ParseResult> for MatchResult {
+    fn from(result: ParseResult) -> Self {
+        match result {
+            ParseResult::R(result) => result,
+            _ => panic!("Could not convert result")
+        }
+    }
+}
+
+fn parse_input_part_1(contents: &str) -> Vec<(Choice, Choice)> {
     contents.split("\n")
         .map(|play| play.split(" ").filter_map(
                 |c| match c {
@@ -33,9 +57,53 @@ fn parse_input(contents: &str) -> Vec<(Choice, Choice)> {
             if play.len() > 0 { 
                 Some((play[0], play[1])) 
             } else {
-                    None
+                None
             }
         ).collect()
+}
+
+fn parse_input_part_2(contents: &str) -> Vec<(Choice, Choice)> {
+    contents.split("\n")
+        .map(|play| play.split(" ").filter_map(
+                |c| match c {
+                    "A" => Some(ParseResult::C(Choice::Rock)),
+                    "B" => Some(ParseResult::C(Choice::Paper)),
+                    "C" => Some(ParseResult::C(Choice::Scissors)),
+                    "X" => Some(ParseResult::R(MatchResult::Loss)),
+                    "Y" => Some(ParseResult::R(MatchResult::Draw)),
+                    "Z" => Some(ParseResult::R(MatchResult::Win)),
+                    _ =>   None,
+                }
+            )
+            .collect::<Vec<ParseResult>>()
+        ).filter_map(
+          |play| 
+            if play.len() > 0 { 
+                Some((play[0].into(), get_play_from_match_result(play[0].into(), play[1].into())))
+            } else {
+                None
+            }
+        ).collect()
+}
+
+fn get_play_from_match_result(they: Choice, result: MatchResult) -> Choice {
+    match result {
+        MatchResult::Win => {
+            match they {
+                Choice::Rock => Choice::Paper,
+                Choice::Paper => Choice::Scissors,
+                Choice::Scissors => Choice::Rock,
+            }
+        },
+        MatchResult::Draw => they,
+        MatchResult::Loss => {
+            match they {
+                Choice::Rock => Choice::Scissors,
+                Choice::Paper => Choice::Rock,
+                Choice::Scissors => Choice::Paper,
+            }
+        }
+    }
 }
 
 fn calculate_match_result(they: Choice, you: Choice) -> MatchResult {
@@ -81,13 +149,15 @@ fn calculate_points(acc: u32, (play, result): (Choice, MatchResult)) -> u32 {
 }
 
 fn solve_1(contents: &str) -> u32 {
-    let games = parse_input(contents);
+    let games = parse_input_part_1(contents);
     games.into_iter().map(|(they, you)| (you, calculate_match_result(they, you)))
          .fold(0, calculate_points)
 }
 
 fn solve_2(contents: &str) -> u32 {
-    0
+    let games = parse_input_part_2(contents);
+    games.into_iter().map(|(they, you)| (you, calculate_match_result(they, you)))
+         .fold(0, calculate_points)
 }
 
 fn main() {
@@ -108,6 +178,15 @@ mod tests {
         assert_eq!(
             solve_1(&sample_input),
             15
+        )
+    }
+
+    #[test]
+    fn solve_2_works_on_sample_input() {
+        let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
+        assert_eq!(
+            solve_2(&sample_input),
+            12
         )
     }
 }
