@@ -1,4 +1,6 @@
 use std::fs;
+use std::iter::Map;
+use std::str::Split;
 
 #[derive(Clone, Copy)]
 enum ParseResult {
@@ -22,6 +24,16 @@ impl From<ParseResult> for Choice {
     }
 }
 
+impl Into<u32> for Choice {
+    fn into(self) -> u32 {
+        match self {
+            Choice::Rock => 1,
+            Choice::Paper => 2,
+            Choice::Scissors => 3,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 enum MatchResult {
     Win,
@@ -38,52 +50,51 @@ impl From<ParseResult> for MatchResult {
     }
 }
 
-fn parse_input_part_1(contents: &str) -> Vec<(Choice, Choice)> {
-    contents.split("\n")
-        .map(|play| play.split(" ").filter_map(
-                |c| match c {
-                    "A" => Some(Choice::Rock),
-                    "B" => Some(Choice::Paper),
-                    "C" => Some(Choice::Scissors),
-                    "X" => Some(Choice::Rock),
-                    "Y" => Some(Choice::Paper),
-                    "Z" => Some(Choice::Scissors),
-                    _ =>   None,
-                }
-            )
-            .collect::<Vec<Choice>>()
-        ).filter_map(
-          |play| 
-            if play.len() > 0 { 
-                Some((play[0], play[1])) 
-            } else {
-                None
-            }
-        ).collect()
+impl From<MatchResult> for u32 {
+    fn from(result: MatchResult) -> u32 {
+        match result {
+            MatchResult::Win => 6,
+            MatchResult::Draw => 3,
+            MatchResult::Loss => 0,
+        }
+    }
 }
 
-fn parse_input_part_2(contents: &str) -> Vec<(Choice, Choice)> {
+fn parse_input<F>(contents: &str, parser: F) -> Map<Split<&str>, F> 
+    where F: Fn(&str) -> Vec<ParseResult> {
     contents.split("\n")
-        .map(|play| play.split(" ").filter_map(
-                |c| match c {
-                    "A" => Some(ParseResult::C(Choice::Rock)),
-                    "B" => Some(ParseResult::C(Choice::Paper)),
-                    "C" => Some(ParseResult::C(Choice::Scissors)),
-                    "X" => Some(ParseResult::R(MatchResult::Loss)),
-                    "Y" => Some(ParseResult::R(MatchResult::Draw)),
-                    "Z" => Some(ParseResult::R(MatchResult::Win)),
-                    _ =>   None,
-                }
-            )
-            .collect::<Vec<ParseResult>>()
-        ).filter_map(
-          |play| 
-            if play.len() > 0 { 
-                Some((play[0].into(), get_play_from_match_result(play[0].into(), play[1].into())))
-            } else {
-                None
-            }
-        ).collect()
+        .map(parser)
+}
+
+fn parse_part_1(play: &str) -> Vec<ParseResult> {
+    play.split(" ").filter_map(
+        |c| match c {
+            "A" => Some(ParseResult::C(Choice::Rock)),
+            "B" => Some(ParseResult::C(Choice::Paper)),
+            "C" => Some(ParseResult::C(Choice::Scissors)),
+            "X" => Some(ParseResult::C(Choice::Rock)),
+            "Y" => Some(ParseResult::C(Choice::Paper)),
+            "Z" => Some(ParseResult::C(Choice::Scissors)),
+            _ =>   None,
+        }
+    )
+    .collect()
+}
+
+fn parse_part_2(play: &str) -> Vec<ParseResult> {
+    play.split(" ").filter_map(
+        |c| match c {
+            "A" => Some(ParseResult::C(Choice::Rock)),
+            "B" => Some(ParseResult::C(Choice::Paper)),
+            "C" => Some(ParseResult::C(Choice::Scissors)),
+            "X" => Some(ParseResult::R(MatchResult::Loss)),
+            "Y" => Some(ParseResult::R(MatchResult::Draw)),
+            "Z" => Some(ParseResult::R(MatchResult::Win)),
+            _ =>   None,
+        }
+    )
+    .collect()
+
 }
 
 fn get_play_from_match_result(they: Choice, result: MatchResult) -> Choice {
@@ -127,37 +138,48 @@ fn calculate_match_result(they: Choice, you: Choice) -> MatchResult {
                 Choice::Rock => MatchResult::Win,
                 Choice::Paper => MatchResult::Loss,
                 Choice::Scissors => MatchResult::Draw,
-            }
-        },
+            } },
     }
 }
 
 fn calculate_points(acc: u32, (play, result): (Choice, MatchResult)) -> u32 {
-    let choice_point = match play {
-        Choice::Rock => 1,
-        Choice::Paper => 2,
-        Choice::Scissors => 3,
-    };
+    let choice_point : u32 = play.into();
+    let match_point : u32 = result.into();
 
-    let match_point = match result {
-        MatchResult::Win => 6,
-        MatchResult::Draw => 3,
-        MatchResult::Loss => 0,
-    };
 
     acc + choice_point + match_point
 }
 
+fn transform_part_1(play: Vec<ParseResult>) -> Option<(Choice, Choice)> {
+    if play.len() > 0 { 
+        Some((play[0].into(), play[1].into())) 
+    } else {
+        None
+    }
+}
+
+fn transform_part_2(play: Vec<ParseResult>) -> Option<(Choice, Choice)> {
+    if play.len() > 0 { 
+        Some((play[0].into(), get_play_from_match_result(play[0].into(), play[1].into())))
+    } else {
+        None
+    }
+}
+
 fn solve_1(contents: &str) -> u32 {
-    let games = parse_input_part_1(contents);
-    games.into_iter().map(|(they, you)| (you, calculate_match_result(they, you)))
-         .fold(0, calculate_points)
+    solve(contents, parse_part_1, transform_part_1)
 }
 
 fn solve_2(contents: &str) -> u32 {
-    let games = parse_input_part_2(contents);
-    games.into_iter().map(|(they, you)| (you, calculate_match_result(they, you)))
-         .fold(0, calculate_points)
+    solve(contents, parse_part_2, transform_part_2)
+}
+
+fn solve<F, T>(contents: &str, parser: F, transformer: T) -> u32 
+    where F: Fn(&str) -> Vec<ParseResult>,
+          T: Fn(Vec<ParseResult>) -> Option<(Choice, Choice)> {
+    parse_input(contents, parser).filter_map(transformer)
+        .map(|(they, you)| (you, calculate_match_result(they, you)))
+        .fold(0, calculate_points)
 }
 
 fn main() {
