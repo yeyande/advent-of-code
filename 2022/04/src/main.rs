@@ -16,7 +16,13 @@ fn parse_elf_assignment(elf: &str) -> HashSet<u32> {
 fn is_any_self_contained(assignments: &Vec<HashSet<u32>>) -> bool {
     let elf_1 = &assignments[0];
     let elf_2 = &assignments[1];
-    elf_1.is_subset(&elf_2) || elf_2.is_subset(&elf_1)
+    elf_1.is_subset(elf_2) || elf_2.is_subset(elf_1)
+}
+
+fn is_any_overlapping(assignments: &Vec<HashSet<u32>>) -> bool {
+    let elf_1 = &assignments[0];
+    let elf_2 = &assignments[1];
+    elf_1.intersection(elf_2).collect::<HashSet<_>>().len() > 0
 }
 
 fn solve_1(contents: &str) -> u32 {
@@ -26,7 +32,9 @@ fn solve_1(contents: &str) -> u32 {
 }
 
 fn solve_2(contents: &str) -> u32 {
-    0
+    contents.split("\n")
+            .filter_map(|assignments| if assignments.len() > 0 { Some(assignments.split(",").map(parse_elf_assignment).collect()) } else { None } ).collect::<Vec<Vec<HashSet<u32>>>>().into_iter()
+            .filter(is_any_overlapping).collect::<Vec<Vec<HashSet<u32>>>>().len() as u32
 }
 
 fn main() {
@@ -55,7 +63,7 @@ mod tests {
         let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
         assert_eq!(
             solve_2(&sample_input),
-            0
+            4
         )
     }
 }
