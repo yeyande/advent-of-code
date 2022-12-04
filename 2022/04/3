@@ -1,0 +1,59 @@
+use std::fs;
+use std::collections::HashSet;
+use std::ops::Range;
+
+fn parse_elf_assignment(elf: &str) -> HashSet<u32> {
+    let mut range = elf.split("-");
+    let start : u32 = range.next().unwrap().parse().unwrap();
+    let end : u32 = range.next().unwrap().parse().unwrap();
+    let mut assignments = HashSet::new();
+    for i in (Range { start, end }) {
+        assignments.insert(i);
+    }
+    assignments
+}
+
+fn is_any_self_contained(assignments: &Vec<HashSet<u32>>) -> bool {
+    false
+}
+
+fn solve_1(contents: &str) -> u32 {
+    contents.split("\n")
+            .filter_map(|assignments| if assignments.len() > 0 { Some(assignments.split(",").map(parse_elf_assignment).collect()) } else { None } ).collect::<Vec<Vec<HashSet<u32>>>>().into_iter()
+            .filter(is_any_self_contained).collect().len()
+}
+
+fn solve_2(contents: &str) -> u32 {
+    0
+}
+
+fn main() {
+    let contents = fs::read_to_string("input.txt").expect("Could not read input");
+    let solution_1 = solve_1(&contents);
+    println!("{:?}", solution_1);
+    let solution_2 = solve_2(&contents);
+    println!("{:?}", solution_2);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn solve_1_works_on_sample_input() {
+        let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
+        assert_eq!(
+            solve_1(&sample_input),
+            2
+        )
+    }
+
+    #[test]
+    fn solve_2_works_on_sample_input() {
+        let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
+        assert_eq!(
+            solve_2(&sample_input),
+            0
+        )
+    }
+}
