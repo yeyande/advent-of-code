@@ -20,6 +20,20 @@ fn solve_1(contents: &str) -> usize {
 }
 
 fn solve_2(contents: &str) -> usize {
+    for idx in (0..contents.len()) {
+        match contents.get(idx..idx+14) {
+            Some(s) => {
+                let mut unique: HashSet<char> = HashSet::new();
+                for c in s.chars() {
+                    unique.insert(c);
+                }
+                if unique.len() == s.len() {
+                    return idx+14;
+                }
+            },
+            None => {},
+        }
+    }
     0
 }
 
@@ -54,10 +68,18 @@ mod tests {
 
     #[test]
     fn solve_2_works_on_sample_input() {
-        let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
-        assert_eq!(
-            solve_2(&sample_input),
-            0
-        )
+        let sample_input: Vec<(&str, usize)> = vec![
+            ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", 19),
+            ("bvwbjplbgvbhsrlpgdmjqwftvncz", 23),
+            ("nppdvjthqldpwncqszvftbrmjlhg", 23),
+            ("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 29),
+            ("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 26),
+        ];
+        for (input, expected) in sample_input.iter() {
+            assert_eq!(
+                solve_2(input),
+                (*expected)
+            )
+        }
     }
 }
