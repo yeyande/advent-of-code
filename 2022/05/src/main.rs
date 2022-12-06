@@ -55,7 +55,17 @@ fn solve_1(contents: &str) -> String {
 }
 
 fn solve_2(contents: &str) -> String {
-    "".to_string()
+    let mut input = contents.split("\n\n");
+    let mut state = parse_initial_state(input.next().unwrap());
+    let instructions = input.next().unwrap();
+    for instruction in instructions.split("\n").filter_map(parse_instruction) {
+        let mut moving : Vec<char> = (0..instruction.count).filter_map(|_| state[instruction.from-1].pop()).collect();
+        moving.reverse();
+        for item in moving.into_iter() {
+            state[instruction.to-1].push(item);
+        }
+    }
+    state.into_iter().filter_map(|mut c| c.pop()).collect()
 }
 
 fn main() {
@@ -84,7 +94,7 @@ mod tests {
         let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
         assert_eq!(
             solve_2(&sample_input),
-            ""
+            "MCD"
         )
     }
 }
