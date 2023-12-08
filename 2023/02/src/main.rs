@@ -5,7 +5,7 @@ fn parse_input(contents: &str) -> Vec<&str> {
         .collect()
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Copy,Clone, Debug, PartialEq)]
 enum Color {
     Red,
     Green,
@@ -75,10 +75,29 @@ fn solve_1(contents: &str) -> u32 {
         .fold(0, |acc, x| acc+(x.id as u32))
 }
 
+fn get_fewest_cubes(game: &Game) -> Vec<(usize, Color)> {
+    vec![
+        *game.pulls.iter().filter(|(_, x)| x == &Color::Red).max_by_key(|(c, _)| c).unwrap(),
+        *game.pulls.iter().filter(|(_, x)| x == &Color::Blue).max_by_key(|(c, _)| c).unwrap(),
+        *game.pulls.iter().filter(|(_, x)| x == &Color::Green).max_by_key(|(c, _)| c).unwrap(),
+    ]
+}
+
+fn solve_2(contents: &str) -> u32 {
+    let games: Vec<Game> = parse_input(contents).into_iter().filter_map(Game::from_string).collect();
+    games
+    .iter()
+    .map(get_fewest_cubes)
+    .fold(0, |acc, x| acc+(x.iter().map(|(c, _)| c).fold(1, |pow, count| pow*count) as u32))
+
+}
+
 fn main() {
     let contents = fs::read_to_string("input.txt").expect("Could not read input");
     let solution_1 = solve_1(&contents);
     println!("{:?}", solution_1);
+    let solution_2 = solve_2(&contents);
+    println!("{:?}", solution_2);
 }
 
 #[cfg(test)]
@@ -91,6 +110,15 @@ mod tests {
         assert_eq!(
             solve_1(&sample_input),
             8
+        )
+    }
+
+    #[test]
+    fn solve_2_works_on_sample_input() {
+        let sample_input = fs::read_to_string("sample.txt").expect("Could not read sample input");
+        assert_eq!(
+            solve_2(&sample_input),
+            2286
         )
     }
 }
